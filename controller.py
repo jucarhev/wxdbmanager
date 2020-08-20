@@ -15,9 +15,10 @@ class Controller( Model):
 		pass
 
 	def check_conn(self):
+		self.variable_connection()
 		r = self.connection()
 		if r == None:
-			return "Ok"
+			return 1
 		else:
 			return r
 
