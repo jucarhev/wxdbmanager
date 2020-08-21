@@ -17,8 +17,8 @@ class Controller( Model):
 	def check_conn(self):
 		self.variable_connection()
 		r = self.connection()
-		self.close()
 		if r == None:
+			self.close()
 			return 1
 		else:
 			return r

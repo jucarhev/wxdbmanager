@@ -20,13 +20,15 @@ class main ( wx.Frame ):
 	
 	def __init__( self, parent ):
 
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = (0,0), size = wx.Size( 500,300 ) )
 
 		path = os.path.abspath("./icons/wxdbmanager_32x32.png")
 		icon = wx.Icon(path, wx.BITMAP_TYPE_PNG)
 		self.SetIcon(icon)
 
 		self.check_connection()
+
+	def gui(self):
 		
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.m_menu1 = wx.Menu()
@@ -68,15 +70,22 @@ class main ( wx.Frame ):
 			#wx.MessageBox("ok", 'Info',wx.OK | wx.ICON_INFORMATION)
 			print("Ok")
 			self.is_connect = True
+			self.gui()
 		else:
 			wx.MessageBox(str(m), 'Info',wx.OK | wx.ICON_INFORMATION)
+			self.conection_manager()
+			self.check_connection()
 
-	def conection_manager(self, evt):
+	def conection_manager(self, evt=''):
 		NewBD = Dialog_Connection(self)
 		NewBD.ShowModal()
 		NewBD.Destroy()
 
-	# =====> TREE
+		#self.Destroy()
+		
+
+		#self.__init__(None)
+
 	def add_items_tree(self):
 		root = self.tree.AddRoot('Databases')
 		self.tree.Expand(root)
@@ -161,7 +170,7 @@ class main ( wx.Frame ):
 		item = self.popupmenu.GetLabel(event.GetId())
 
 		if item == 'Select':
-			self.notebook.AddPage( select_table_panel(self.notebook, self.database_active, self.table_active), u"Select Table")
+			self.notebook.AddPage( select_table_panel(self.notebook, self.database_active, self.table_active), u"Select "+ self.table_active)
 		
 		elif item == 'New DB':
 			NewBD = new_database_dialog(self)
@@ -202,8 +211,8 @@ class main ( wx.Frame ):
 			pass
 
 		elif item == 'Describe':
-			pass
-
+			self.notebook.AddPage( describe_table_panel(self.notebook, self.database_active, self.table_active), u"Describe "+ self.table_active)
+		
 		elif item == 'Add':
 			pass
 
@@ -323,7 +332,6 @@ class new_database_dialog ( wx.Dialog ):
 
 		self.btnCreate.Bind(wx.EVT_BUTTON,self.create_database)
 
-
 	def create_database(self, evt):
 		db = self.txtDatabase.GetValue()
 		n = self.controller.create_new_database(db)
@@ -331,68 +339,6 @@ class new_database_dialog ( wx.Dialog ):
 			print("s")
 		else:
 			wx.MessageBox(str(n), 'Info',wx.OK | wx.ICON_INFORMATION)
-
-class select_table_panel(wx.Panel):
-	"""docstring for select_table_panel"""
-
-	controller = Controller()
-
-	def __init__(self, parent, db, table):
-		wx.Panel.__init__ ( self, parent=parent, id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.TAB_TRAVERSAL )
-
-		self.table = table
-		self.db = db
-
-		bSizer12 = wx.BoxSizer( wx.VERTICAL )
-
-		self.tool2 = wx.ToolBar( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TB_HORIZONTAL )
-		self.tool_add_row = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_add.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add", wx.EmptyString, None ) 
-		self.f1 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_remove.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add", wx.EmptyString, None )
-		self.f4 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add", wx.EmptyString, None ) 
-		self.tool2.AddSeparator()
-		self.f2 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_add.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add", wx.EmptyString, None )
-		self.f3 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add", wx.EmptyString, None ) 
-		self.f4 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_remove.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add", wx.EmptyString, None ) 
-		self.tool2.AddSeparator() 
-		self.f4 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/vaciar.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add", wx.EmptyString, None ) 
-		
-		self.tool2.Realize()
-		
-		bSizer12.Add( self.tool2, 0, wx.EXPAND, 5 )
-
-		id=wx.NewId()
-		self.lista=wx.ListCtrl(self,id,style=wx.LC_REPORT|wx.SUNKEN_BORDER)
-		bSizer12.Add(self.lista, 1, wx.EXPAND)
-		self.SetSizer( bSizer12 )
-		self.Layout()
-
-		self.list_data()
-
-		self.Bind(wx.EVT_TOOL, self.add_row, self.tool_add_row)
-
-	def list_data(self):
-		rows = self.controller.get_columns_from_table(self.table, self.db)
-		c = 0
-		for row in rows:
-			if c == 0:
-				self.primera_columna_db = str(row[0])
-			self.lista.InsertColumn(c, row[0])
-			c = c+1
-
-		rows = ''
-		rows = self.controller.get_data(self.table,self.db)
-
-		arreglo = []
-		for row in rows:
-			arreglo.append(row)
-
-		for ar in arreglo:
-			index = self.lista.InsertStringItem(sys.maxsize, str(ar[0]))
-			for er in range(1,c):
-				self.lista.SetStringItem(index, er, str(ar[er]))
-
-	def add_row(self, event):
-		pass
 
 class new_table_dialog ( wx.Dialog ):
 
@@ -526,6 +472,279 @@ class new_table_dialog ( wx.Dialog ):
 			self.Close()
 		else:
 			wx.MessageBox(str(r) , 'Info',wx.OK | wx.ICON_INFORMATION)
+
+class add_new_column ( wx.Dialog ):
+	controller = Controller()
+
+	def __init__( self, parent, table, db ):
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Add new column", pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE )
+
+		self.table = table
+		self.db = db 
+
+		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+
+		bSizer1 = wx.BoxSizer( wx.VERTICAL )
+
+		gSizer1 = wx.GridSizer( 0, 2, 0, 0 )
+
+		self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Field Name", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText1.Wrap( -1 )
+
+		gSizer1.Add( self.m_staticText1, 0, wx.ALL, 5 )
+
+		self.txtFieldName = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		gSizer1.Add( self.txtFieldName, 0, wx.ALL, 5 )
+
+		self.m_staticText3 = wx.StaticText( self, wx.ID_ANY, u"Type", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText3.Wrap( -1 )
+
+		gSizer1.Add( self.m_staticText3, 0, wx.ALL, 5 )
+
+		cboTypeChoices =  [ u"varchar", u"integer", u"boolean", u"date" ]
+		self.cboType = wx.ComboBox( self, wx.ID_ANY, 'varchar', wx.DefaultPosition, wx.DefaultSize, cboTypeChoices, 0 )
+		gSizer1.Add( self.cboType, 0, wx.ALL, 5 )
+
+		self.m_staticText4 = wx.StaticText( self, wx.ID_ANY, u"Long", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText4.Wrap( -1 )
+
+		gSizer1.Add( self.m_staticText4, 0, wx.ALL, 5 )
+
+		self.spinLong = wx.SpinCtrl( self, wx.ID_ANY, u"10", wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 255, 10 )
+		gSizer1.Add( self.spinLong, 0, wx.ALL, 5 )
+
+		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"Default", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText5.Wrap( -1 )
+
+		gSizer1.Add( self.m_staticText5, 0, wx.ALL, 5 )
+
+		self.txtDefault = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		gSizer1.Add( self.txtDefault, 0, wx.ALL, 5 )
+
+		self.checknull = wx.CheckBox( self, wx.ID_ANY, u"Not Null", wx.DefaultPosition, wx.DefaultSize, 0 )
+		gSizer1.Add( self.checknull, 0, wx.ALL, 5 )
+
+		self.m_staticText7 = wx.StaticText( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText7.Wrap( -1 )
+
+		gSizer1.Add( self.m_staticText7, 0, wx.ALL, 5 )
+
+		cboAfterChoices = [ u"After", u"Before", u"After" ]
+		self.cboAfter = wx.ComboBox( self, wx.ID_ANY, u"After", wx.DefaultPosition, wx.DefaultSize, cboAfterChoices, 0 )
+		self.cboAfter.SetSelection( 0 )
+		gSizer1.Add( self.cboAfter, 0, wx.ALL, 5 )
+
+		self.columns_from_table()
+		
+		self.cboFields = wx.ComboBox( self, wx.ID_ANY, self.cboFieldsChoices[0] , wx.DefaultPosition, wx.DefaultSize, self.cboFieldsChoices, 0 )
+		gSizer1.Add( self.cboFields, 0, wx.ALL, 5 )
+
+		self.btnAdd = wx.Button( self, wx.ID_ANY, u"Add", wx.DefaultPosition, wx.DefaultSize, 0 )
+		gSizer1.Add( self.btnAdd, 0, wx.ALL, 5 )
+
+
+		bSizer1.Add( gSizer1, 1, wx.EXPAND, 5 )
+
+
+		self.SetSizer( bSizer1 )
+		self.Layout()
+		bSizer1.Fit( self )
+
+		self.Centre( wx.BOTH )
+
+		self.Bind(wx.EVT_BUTTON, self.addcolumns ,self.btnAdd )
+
+	def addcolumns(self, evt):
+		if self.checknull.GetValue() == True:
+			null = ' Not null '
+		else:
+			null = ''
+
+		sql = 'ALTER TABLE '+self.table+' ADD COLUMN '+self.txtFieldName.GetValue()
+		sql = sql +' '+self.cboType.GetValue()+'('+str(self.spinLong.GetValue())+') ' + ' '+ null
+		sql =sql +self.cboAfter.GetValue()+' '+self.cboFields.GetValue()+';'
+		print(sql)
+
+		n = self.controller.execute_sql(sql, self.db)
+		if n == None:
+			wx.MessageBox("Column create", 'Info',wx.OK | wx.ICON_INFORMATION)
+			self.Close()
+		else:
+			wx.MessageBox(str(n), 'Info',wx.OK | wx.ICON_INFORMATION)
+
+	def columns_from_table(self):
+		rows = self.controller.get_columns_from_table(self.table, self.db)
+		self.cboFieldsChoices = []
+		for row in rows:
+			self.cboFieldsChoices.append(row[0])
+		
+		print(self.cboFieldsChoices)
+
+class remove_column ( wx.Dialog ):
+	controller = Controller()
+	def __init__(self, parent, db, table):
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Remove column", pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE )
+
+		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+
+		self.table = table
+		self.db = db
+
+		gSizer2 = wx.GridSizer( 0, 2, 0, 0 )
+
+		self.m_staticText8 = wx.StaticText( self, wx.ID_ANY, u"Column:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText8.Wrap( -1 )
+
+		gSizer2.Add( self.m_staticText8, 0, wx.ALL, 5 )
+
+		self.columns_from_table()
+		self.cboColumn = wx.ComboBox( self, wx.ID_ANY, self.cboFieldsChoices[1], wx.DefaultPosition, wx.DefaultSize, self.cboFieldsChoices, 0 )
+		gSizer2.Add( self.cboColumn, 0, wx.ALL, 5 )
+
+		self.btnRemove = wx.Button( self, wx.ID_ANY, u"Remove", wx.DefaultPosition, wx.DefaultSize, 0 )
+		gSizer2.Add( self.btnRemove, 0, wx.ALL, 5 )
+
+
+		self.SetSizer( gSizer2 )
+		self.Layout()
+		gSizer2.Fit( self )
+
+		self.Centre( wx.BOTH )
+
+		self.Bind(wx.EVT_BUTTON, self.del_column ,self.btnRemove )
+
+	def del_column(self, evt):
+		sql = 'ALTER TABLE '+self.table+' DROP COLUMN '+self.cboColumn.GetValue()+';'
+		print(sql)
+		n = self.controller.execute_sql(sql, self.db)
+		
+		if n == None:
+			wx.MessageBox("Column delete", 'Info',wx.OK | wx.ICON_INFORMATION)
+			self.Close()
+		else:
+			wx.MessageBox(str(n), 'Info',wx.OK | wx.ICON_INFORMATION)
+
+	def columns_from_table(self):
+		rows = self.controller.get_columns_from_table(self.table, self.db)
+		self.cboFieldsChoices = []
+		for row in rows:
+			self.cboFieldsChoices.append(row[0])
+
+class select_table_panel( wx.Panel ):
+	"""docstring for select_table_panel"""
+
+	controller = Controller()
+
+	def __init__(self, parent, db, table):
+		wx.Panel.__init__ ( self, parent=parent, id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.TAB_TRAVERSAL )
+
+		self.table = table
+		self.db = db
+
+		bSizer12 = wx.BoxSizer( wx.VERTICAL )
+
+		self.tool2 = wx.ToolBar( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TB_HORIZONTAL )
+		self.tool_add_row = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_add.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add", wx.EmptyString, None ) 
+		self.f1 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_remove.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Row remove", wx.EmptyString, None )
+		self.f4 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Row edit", wx.EmptyString, None ) 
+		self.tool2.AddSeparator()
+		self.tool_column_add = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_add.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add new column", wx.EmptyString, None )
+		self.f3 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Column edit", wx.EmptyString, None ) 
+		self.tool_column_remove = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_remove.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Column remove", wx.EmptyString, None ) 
+		self.tool2.AddSeparator() 
+		self.f4 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/vaciar.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Truncate table", wx.EmptyString, None ) 
+		
+		self.tool2.Realize()
+		
+		bSizer12.Add( self.tool2, 0, wx.EXPAND, 5 )
+
+		id=wx.NewId()
+		self.lista=wx.ListCtrl(self, -1, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
+		bSizer12.Add(self.lista, 1, wx.EXPAND)
+		self.SetSizer( bSizer12 )
+		self.Layout()
+
+		self.list_data()
+
+		self.Bind(wx.EVT_TOOL, self.add_row, self.tool_add_row)
+		self.Bind(wx.EVT_TOOL, self.column_add ,self.tool_column_add )
+		self.Bind(wx.EVT_TOOL, self.column_remove ,self.tool_column_remove )
+
+	def list_data(self):
+		rows = self.controller.get_columns_from_table(self.table, self.db)
+		self.columns = rows
+		c = 0
+		for row in rows:
+			if c == 0:
+				self.primera_columna_db = str(row[0])
+			self.lista.InsertColumn(c, row[0])
+			c = c+1
+
+		rows = ''
+		rows = self.controller.get_data(self.table,self.db)
+
+		arreglo = []
+		for row in rows:
+			arreglo.append(row)
+
+		for ar in arreglo:
+			index = self.lista.InsertStringItem(sys.maxsize, str(ar[0]))
+			for er in range(1,c):
+				self.lista.SetStringItem(index, er, str(ar[er]))
+
+	def add_row(self, event):
+		pass
+
+	def column_remove(self, evt):
+		NewBD = remove_column(self, self.db, self.table)
+		NewBD.ShowModal()
+		NewBD.Destroy()
+
+		self.lista.ClearAll()
+		self.list_data()
+
+	def column_add(self, evt):
+		NewBD = add_new_column(self, self.table, self.db)
+		NewBD.ShowModal()
+		NewBD.Destroy()
+
+		self.lista.ClearAll()
+		self.list_data()
+
+class describe_table_panel( wx.Panel ):
+	controller = Controller()
+
+	def __init__(self, parent, db, table):
+		wx.Panel.__init__ ( self, parent=parent, id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.TAB_TRAVERSAL )
+
+		self.table = table
+		self.db = db
+
+		bSizer12 = wx.BoxSizer( wx.VERTICAL )
+		id=wx.NewId()
+		self.lista=wx.ListCtrl(self, -1, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
+		bSizer12.Add(self.lista, 1, wx.EXPAND)
+		self.SetSizer( bSizer12 )
+		self.Layout()
+
+		self.list_data()
+
+	def list_data(self):
+		self.lista.InsertColumn(0, "Field")
+		self.lista.InsertColumn(1, "Type")
+		self.lista.InsertColumn(2, "Null")
+		self.lista.InsertColumn(3, "Key")
+		self.lista.InsertColumn(4, "Default")
+		self.lista.InsertColumn(5, "Extra")
+
+		rows = self.controller.get_columns_from_table(self.table, self.db)
+		print(rows)
+		#print(len(rows))
+		
+		for row in rows:
+			index = self.lista.InsertStringItem(sys.maxsize, str(row[0]))
+			for er in range(1,len(rows)):
+				self.lista.SetStringItem(index, er, str(row[er]))
 
 app = wx.App()
 main(None)
