@@ -17,6 +17,7 @@ class Controller( Model):
 	def check_conn(self):
 		self.variable_connection()
 		r = self.connection()
+		self.close()
 		if r == None:
 			return 1
 		else:
@@ -33,9 +34,32 @@ class Controller( Model):
 		return result
 
 	def get_columns_from_table(self,table,database):
-		# Ok
+		self.variable_connection()
 		result = self.return_data("SHOW COLUMNS FROM "+table+" IN "+database+";")
 		return result
+
+	def get_data(self, table, database):
+		self.variable_connection()
+		sql = "select * from " + table
+		r = self.return_data(sql, database)
+		return r
+
+	def create_new_database(self, db):
+		self.variable_connection()
+		sql = "CREATE DATABASE " + db
+		r = self.execute_sql(sql,'')
+		return r
+
+	def drop_database(self, db):
+		self.variable_connection()
+		sql = "DROP DATABASE " + db
+		r = self.execute_sql(sql,'')
+		return r
+
+	def create_new_table(self, sql, db):
+		self.variable_connection()
+		r = self.execute_sql(sql,db)
+		return r
 
 	def delete_data(self, table, database):
 		pass
