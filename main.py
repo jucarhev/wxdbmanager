@@ -4,9 +4,8 @@ import wx
 import wx.xrc
 import wx.aui
 import sys, os
-
+import re
 from controller import Controller
-
 
 class main ( wx.Frame ):
 	""" Principal class """
@@ -580,6 +579,144 @@ class add_new_column ( wx.Dialog ):
 		
 		print(self.cboFieldsChoices)
 
+class edit_column ( wx.Dialog ):
+	controller = Controller()
+
+	def __init__( self, parent, table, db ):
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Edit column", pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE )
+
+		self.table = table
+		self.db = db 
+
+		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+
+		bSizer1 = wx.BoxSizer( wx.VERTICAL )
+
+		gSizer1 = wx.GridSizer( 0, 2, 0, 0 )
+
+		self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Field Name", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText1.Wrap( -1 )
+
+		gSizer1.Add( self.m_staticText1, 0, wx.ALL, 5 )
+
+		self.columns_from_table()
+		self.cboColumns = wx.ComboBox( self, wx.ID_ANY, self.cboFieldsChoices[0], wx.DefaultPosition, wx.DefaultSize, self.cboFieldsChoices, 0 )
+		gSizer1.Add( self.cboColumns, 0, wx.ALL, 5 )
+
+		self.m_staticText3 = wx.StaticText( self, wx.ID_ANY, u"Type", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText3.Wrap( -1 )
+
+		gSizer1.Add( self.m_staticText3, 0, wx.ALL, 5 )
+
+		cboTypeChoices =  [ u"varchar", u"integer", u"boolean", u"date" ]
+		self.cboType = wx.ComboBox( self, wx.ID_ANY, 'varchar', wx.DefaultPosition, wx.DefaultSize, cboTypeChoices, 0 )
+		gSizer1.Add( self.cboType, 0, wx.ALL, 5 )
+
+		self.m_staticText4 = wx.StaticText( self, wx.ID_ANY, u"Long", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText4.Wrap( -1 )
+
+		gSizer1.Add( self.m_staticText4, 0, wx.ALL, 5 )
+
+		self.spinLong = wx.SpinCtrl( self, wx.ID_ANY, u"10", wx.DefaultPosition, wx.DefaultSize, wx.SP_ARROW_KEYS, 0, 255, 10 )
+		gSizer1.Add( self.spinLong, 0, wx.ALL, 5 )
+
+		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"Default", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText5.Wrap( -1 )
+
+		gSizer1.Add( self.m_staticText5, 0, wx.ALL, 5 )
+
+		self.txtDefault = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		gSizer1.Add( self.txtDefault, 0, wx.ALL, 5 )
+
+		self.checknull = wx.CheckBox( self, wx.ID_ANY, u"Not Null", wx.DefaultPosition, wx.DefaultSize, 0 )
+		gSizer1.Add( self.checknull, 0, wx.ALL, 5 )
+
+		self.m_staticText7 = wx.StaticText( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText7.Wrap( -1 )
+
+		gSizer1.Add( self.m_staticText7, 0, wx.ALL, 5 )
+
+		cboAfterChoices = [ u"Before", u"After" ]
+		self.cboAfter = wx.ComboBox( self, wx.ID_ANY, u"After", wx.DefaultPosition, wx.DefaultSize, cboAfterChoices, 0 )
+		self.cboAfter.SetSelection( 0 )
+		gSizer1.Add( self.cboAfter, 0, wx.ALL, 5 )
+		
+		test = []
+		self.cboFields = wx.ComboBox( self, wx.ID_ANY, '' , wx.DefaultPosition, wx.DefaultSize, test , 0 )
+		gSizer1.Add( self.cboFields, 0, wx.ALL, 5 )
+
+		self.btnAdd = wx.Button( self, wx.ID_ANY, u"Edit", wx.DefaultPosition, wx.DefaultSize, 0 )
+		gSizer1.Add( self.btnAdd, 0, wx.ALL, 5 )
+
+		bSizer1.Add( gSizer1, 1, wx.EXPAND, 5 )
+
+		self.SetSizer( bSizer1 )
+		self.Layout()
+		bSizer1.Fit( self )
+
+		self.Centre( wx.BOTH )
+
+		self.Bind(wx.EVT_BUTTON, self.addcolumns ,self.btnAdd )
+
+		self.Bind(wx.EVT_COMBOBOX, self.datafield, self.cboColumns )
+
+	def columns_from_table(self,column=''):
+		rows = self.controller.get_columns_from_table(self.table, self.db)
+		self.cboFieldsChoices = []
+		
+		if column == '':
+			for row in rows:
+				self.cboFieldsChoices.append(row[0])
+		else:
+			for row in rows:
+				if row[0] == column:
+					pass
+				else:
+					self.cboFieldsChoices.append(row[0])
+	
+	def addcolumns(self, evt):
+		if self.checknull.GetValue() == True:
+			null = ' Not null '
+		else:
+			null = ''
+
+		sql = 'ALTER TABLE '+self.table+' ADD COLUMN '+self.txtFieldName.GetValue()
+		sql = sql +' '+self.cboType.GetValue()+'('+str(self.spinLong.GetValue())+') ' + ' '+ null
+		sql =sql +self.cboAfter.GetValue()+' '+self.cboFields.GetValue()+';'
+		print(sql)
+
+		n = self.controller.execute_sql(sql, self.db)
+		if n == None:
+			wx.MessageBox("Column create", 'Info',wx.OK | wx.ICON_INFORMATION)
+			self.Close()
+		else:
+			wx.MessageBox(str(n), 'Info',wx.OK | wx.ICON_INFORMATION)
+
+	def datafield(self, evt):
+		self.checknull.SetValue(False)
+
+		rows = self.controller.get_columns_from_table(self.table, self.db)
+		#int(filter(str.isdigit, str1))
+		for row in rows:
+			if row[0] == self.cboColumns.GetValue():
+				if row[2] == 'NO':
+					self.checknull.SetValue(True)
+				elif row[2] == 'YES': 
+					self.checknull.SetValue(False)
+
+				array = row[1].split('(')
+				self.cboType.SetValue(array[0])
+
+				array2 = str(array[1]).split(')')
+
+				self.spinLong.SetValue(int(array2[0]))
+
+				if row[4] != None:
+					self.txtDefault.SetValue(str(row[4]))
+
+				self.columns_from_table(row[0])
+				self.cboFields.SetItems(self.cboFieldsChoices)
+
 class remove_column ( wx.Dialog ):
 	controller = Controller()
 	def __init__(self, parent, db, table):
@@ -630,6 +767,113 @@ class remove_column ( wx.Dialog ):
 		for row in rows:
 			self.cboFieldsChoices.append(row[0])
 
+class Add_rows_dialog ( wx.Dialog ):
+
+	controller = Controller()
+
+	def __init__( self, parent, table, db ):
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Add rows", pos = wx.DefaultPosition, size = wx.Size( 451,258 ), style = wx.DEFAULT_DIALOG_STYLE )
+
+		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+
+		self.table = table
+		self.db = db
+		
+
+		bSizer2 = wx.BoxSizer( wx.VERTICAL )
+
+		bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
+
+		gSizer3 = wx.GridSizer( 0, 2, 0, 0 )
+
+		self.m_staticText7 = wx.StaticText( self, wx.ID_ANY, u"Field", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText7.Wrap( -1 )
+
+		gSizer3.Add( self.m_staticText7, 0, wx.ALL, 5 )
+
+		self.txtField = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize,  wx.TE_READONLY)
+		gSizer3.Add( self.txtField, 0, wx.ALL, 5 )
+
+		self.m_staticText8 = wx.StaticText( self, wx.ID_ANY, u"Value", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText8.Wrap( -1 )
+
+		gSizer3.Add( self.m_staticText8, 0, wx.ALL, 5 )
+
+		self.txtValue = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, style=wx.TE_PROCESS_ENTER )
+		gSizer3.Add( self.txtValue, 0, wx.ALL, 5 )
+
+		self.m_staticText9 = wx.StaticText( self, wx.ID_ANY, u"Enter despues \nde escribir", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText9.Wrap( -1 )
+
+		gSizer3.Add( self.m_staticText9, 0, wx.ALL, 5 )
+
+		self.m_staticText10 = wx.StaticText( self, wx.ID_ANY, u"_", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText10.Wrap( -1 )
+
+		gSizer3.Add( self.m_staticText10, 0, wx.ALL, 5 )
+
+
+		bSizer3.Add( gSizer3, 0, wx.EXPAND, 5 )
+
+		self.txtCampo = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY )
+		bSizer3.Add( self.txtCampo, 1, wx.ALL|wx.EXPAND, 5 )
+
+
+		bSizer2.Add( bSizer3, 0, wx.ALL|wx.EXPAND, 5 )
+
+		self.m_staticline1 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+		bSizer2.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
+
+		self.Guardar = wx.Button( self, wx.ID_ANY, u"Modificar", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer2.Add( self.Guardar, 0, wx.ALIGN_CENTER|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
+
+
+		self.SetSizer( bSizer2 )
+		self.Layout()
+
+		self.Centre( wx.BOTH )
+
+		self.list_data()
+
+		self.Bind(wx.EVT_BUTTON, self.edit_row ,self.Guardar )
+		self.Bind(wx.EVT_TEXT_ENTER, self.nexcolumn, self.txtValue)
+
+	def edit_row(self, evt):
+		pass
+
+	def nexcolumn(self, evt):
+		#print( self.txtValue.GetValue() )
+		#print( self.Num_columns - 1)
+		#print( self.columns_data )
+		print( self.txtCampo.GetValue() )
+		print( self.txtField.GetValue() )
+
+	def verificador(self, data, valor):
+		pass
+
+	def list_data(self):
+		array_column = []
+		active = True
+
+		self.rows = self.controller.get_columns_from_table(self.table, self.db)
+
+		self.Num_columns =  len(self.rows)
+		self.columns_data = []
+		
+		for row in self.rows:
+			if row[5] == 'auto_increment':
+				active = False
+
+			array_column.append(row[0])
+			self.columns_data.append(row[0] + " : " +row[1] + " " +row[3]+ "\n")
+
+			self.txtCampo.AppendText(row[0] + " : " +row[1] + " " +row[3]+ "\n")
+
+		if active == True:
+			self.txtField.SetValue(array_column[0])
+		else:
+			self.txtField.SetValue(array_column[1])
+
 class select_table_panel( wx.Panel ):
 	"""docstring for select_table_panel"""
 
@@ -649,16 +893,15 @@ class select_table_panel( wx.Panel ):
 		self.f4 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Row edit", wx.EmptyString, None ) 
 		self.tool2.AddSeparator()
 		self.tool_column_add = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_add.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add new column", wx.EmptyString, None )
-		self.f3 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Column edit", wx.EmptyString, None ) 
+		self.tool_column_edit = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Column edit", wx.EmptyString, None ) 
 		self.tool_column_remove = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_remove.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Column remove", wx.EmptyString, None ) 
 		self.tool2.AddSeparator() 
-		self.f4 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/vaciar.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Truncate table", wx.EmptyString, None ) 
+		self.tool_truncate = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/vaciar.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Truncate table", wx.EmptyString, None ) 
 		
 		self.tool2.Realize()
 		
 		bSizer12.Add( self.tool2, 0, wx.EXPAND, 5 )
 
-		id=wx.NewId()
 		self.lista=wx.ListCtrl(self, -1, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
 		bSizer12.Add(self.lista, 1, wx.EXPAND)
 		self.SetSizer( bSizer12 )
@@ -666,9 +909,21 @@ class select_table_panel( wx.Panel ):
 
 		self.list_data()
 
-		self.Bind(wx.EVT_TOOL, self.add_row, self.tool_add_row)
+		self.Bind(wx.EVT_TOOL, self.truncate, self.tool_truncate)
 		self.Bind(wx.EVT_TOOL, self.column_add ,self.tool_column_add )
 		self.Bind(wx.EVT_TOOL, self.column_remove ,self.tool_column_remove )
+		self.Bind(wx.EVT_TOOL, self.column_edit , self.tool_column_edit )
+
+		self.Bind(wx.EVT_TOOL, self.add_row , self.tool_add_row )
+
+		self.Bind(wx.EVT_LIST_ITEM_SELECTED ,self.click, self.lista)
+
+	def click(self,event):
+		print( "----------------" )
+		print(self.lista.GetItemText(event.GetIndex(),0))
+		print( event.GetIndex() )
+		self.lista.DeleteItem(event.GetIndex())
+		print( "----------------" )
 
 	def list_data(self):
 		rows = self.controller.get_columns_from_table(self.table, self.db)
@@ -693,7 +948,17 @@ class select_table_panel( wx.Panel ):
 				self.lista.SetStringItem(index, er, str(ar[er]))
 
 	def add_row(self, event):
-		pass
+		NewBD = Add_rows_dialog(self, self.table, self.db)
+		NewBD.ShowModal()
+		NewBD.Destroy()
+
+	def truncate(self, evt):
+		r = self.controller.execute_sql("truncate table "+ self.table , self.db)
+		if r == None:
+			wx.MessageBox("Truncate", 'Info',wx.OK | wx.ICON_INFORMATION)
+			self.Close()
+		else:
+			wx.MessageBox(str(r), 'Info',wx.OK | wx.ICON_INFORMATION)
 
 	def column_remove(self, evt):
 		NewBD = remove_column(self, self.db, self.table)
@@ -705,6 +970,14 @@ class select_table_panel( wx.Panel ):
 
 	def column_add(self, evt):
 		NewBD = add_new_column(self, self.table, self.db)
+		NewBD.ShowModal()
+		NewBD.Destroy()
+
+		self.lista.ClearAll()
+		self.list_data()
+
+	def column_edit(self, evt):
+		NewBD = edit_column(self, self.table, self.db)
 		NewBD.ShowModal()
 		NewBD.Destroy()
 
