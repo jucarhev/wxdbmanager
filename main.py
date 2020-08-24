@@ -752,7 +752,7 @@ class remove_column ( wx.Dialog ):
 
 	def del_column(self, evt):
 		sql = 'ALTER TABLE '+self.table+' DROP COLUMN '+self.cboColumn.GetValue()+';'
-		print(sql)
+		
 		n = self.controller.execute_sql(sql, self.db)
 		
 		if n == None:
@@ -778,102 +778,110 @@ class Add_rows_dialog ( wx.Dialog ):
 
 		self.table = table
 		self.db = db
-		
 
+		self.values = []
+		self.function()
+
+		bSizer1 = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_scrolledWindow1 = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.HSCROLL|wx.VSCROLL )
+		self.m_scrolledWindow1.SetScrollRate( 5, 5 )
 		bSizer2 = wx.BoxSizer( wx.VERTICAL )
 
-		bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
+		gSizer1 = wx.GridSizer( 0, 2, 0, 0 )
 
-		gSizer3 = wx.GridSizer( 0, 2, 0, 0 )
+		# ________________________________
+		for key in self.keys:
+			lbl = wx.StaticText( self.m_scrolledWindow1, wx.ID_ANY, key , wx.DefaultPosition, wx.DefaultSize, 0 )
+			lbl.Wrap( -1 )
 
-		self.m_staticText7 = wx.StaticText( self, wx.ID_ANY, u"Field", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText7.Wrap( -1 )
+			gSizer1.Add( lbl, 0, wx.ALL, 5 )
 
-		gSizer3.Add( self.m_staticText7, 0, wx.ALL, 5 )
+			txt = wx.TextCtrl( self.m_scrolledWindow1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+			gSizer1.Add( txt, 0, wx.ALL, 5 )
+			
+			self.values.append( txt )
 
-		self.txtField = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize,  wx.TE_READONLY)
-		gSizer3.Add( self.txtField, 0, wx.ALL, 5 )
+		# ________________________________
 
-		self.m_staticText8 = wx.StaticText( self, wx.ID_ANY, u"Value", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText8.Wrap( -1 )
+		bSizer2.Add( gSizer1, 1, wx.EXPAND, 5 )
 
-		gSizer3.Add( self.m_staticText8, 0, wx.ALL, 5 )
+		self.m_panel2 = wx.Panel( self.m_scrolledWindow1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+		bSizer4 = wx.BoxSizer( wx.HORIZONTAL )
 
-		self.txtValue = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, style=wx.TE_PROCESS_ENTER )
-		gSizer3.Add( self.txtValue, 0, wx.ALL, 5 )
-
-		self.m_staticText9 = wx.StaticText( self, wx.ID_ANY, u"Enter despues \nde escribir", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText9.Wrap( -1 )
-
-		gSizer3.Add( self.m_staticText9, 0, wx.ALL, 5 )
-
-		self.m_staticText10 = wx.StaticText( self, wx.ID_ANY, u"_", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText10.Wrap( -1 )
-
-		gSizer3.Add( self.m_staticText10, 0, wx.ALL, 5 )
+		btnSave = wx.Button( self.m_panel2, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer4.Add( btnSave, 0, wx.ALL, 5 )
 
 
-		bSizer3.Add( gSizer3, 0, wx.EXPAND, 5 )
-
-		self.txtCampo = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE|wx.TE_READONLY )
-		bSizer3.Add( self.txtCampo, 1, wx.ALL|wx.EXPAND, 5 )
-
-
-		bSizer2.Add( bSizer3, 0, wx.ALL|wx.EXPAND, 5 )
-
-		self.m_staticline1 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
-		bSizer2.Add( self.m_staticline1, 0, wx.EXPAND |wx.ALL, 5 )
-
-		self.Guardar = wx.Button( self, wx.ID_ANY, u"Modificar", wx.DefaultPosition, wx.DefaultSize, 0 )
-		bSizer2.Add( self.Guardar, 0, wx.ALIGN_CENTER|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
+		self.m_panel2.SetSizer( bSizer4 )
+		self.m_panel2.Layout()
+		bSizer4.Fit( self.m_panel2 )
+		bSizer2.Add( self.m_panel2, 0, wx.EXPAND |wx.ALL, 5 )
 
 
-		self.SetSizer( bSizer2 )
+		self.m_scrolledWindow1.SetSizer( bSizer2 )
+		self.m_scrolledWindow1.Layout()
+		bSizer2.Fit( self.m_scrolledWindow1 )
+		bSizer1.Add( self.m_scrolledWindow1, 1, wx.EXPAND |wx.ALL, 5 )
+
+
+		self.SetSizer( bSizer1 )
 		self.Layout()
 
-		self.Centre( wx.BOTH )
+		self.Bind(wx.EVT_BUTTON, self.save_data ,btnSave )
 
-		self.list_data()
+	def function(self):
+		self.columns = self.controller.get_columns_from_table(self.table, self.db)
 
-		self.Bind(wx.EVT_BUTTON, self.edit_row ,self.Guardar )
-		self.Bind(wx.EVT_TEXT_ENTER, self.nexcolumn, self.txtValue)
+		self.keys = []
 
-	def edit_row(self, evt):
-		pass
+		for row in self.columns:
+			self.keys.append(row[0])
 
-	def nexcolumn(self, evt):
-		#print( self.txtValue.GetValue() )
-		#print( self.Num_columns - 1)
-		#print( self.columns_data )
-		print( self.txtCampo.GetValue() )
-		print( self.txtField.GetValue() )
+		self.nums = len(self.keys)
 
-	def verificador(self, data, valor):
-		pass
-
-	def list_data(self):
-		array_column = []
-		active = True
-
-		self.rows = self.controller.get_columns_from_table(self.table, self.db)
-
-		self.Num_columns =  len(self.rows)
-		self.columns_data = []
+	def save_data(self, evt):
+		sql = 'insert into '+ self.table+'('
 		
-		for row in self.rows:
-			if row[5] == 'auto_increment':
-				active = False
+		for x in self.keys:
+			sql = sql + x + ','
+		sql = sql.rstrip(',') + ') values('
 
-			array_column.append(row[0])
-			self.columns_data.append(row[0] + " : " +row[1] + " " +row[3]+ "\n")
+		for raw in range(0,self.nums):
+			e = self.validacion(raw)
+			if e == False:
+				if self.values[raw].GetValue() == '':
+					sql = sql + '0,'
+				else:
+					sql = sql + self.values[raw].GetValue() + ','
+			else:
+				sql = sql + '"' + self.values[raw].GetValue() + '"' +','
 
-			self.txtCampo.AppendText(row[0] + " : " +row[1] + " " +row[3]+ "\n")
+		sql = sql.rstrip(',') + ');'
 
-		if active == True:
-			self.txtField.SetValue(array_column[0])
+		print( sql )
+		n = self.controller.execute_sql(sql, self.db)
+		
+		if n == None:
+			wx.MessageBox("Sucess", 'Info',wx.OK | wx.ICON_INFORMATION)
+			self.Close()
 		else:
-			self.txtField.SetValue(array_column[1])
+			wx.MessageBox(str(n), 'Info',wx.OK | wx.ICON_INFORMATION)
 
+	def validacion(self, campo=''):
+		print(self.columns[campo][1])
+
+		if str(self.columns[campo][1]).upper().count('INT') == 1:
+			return False
+		elif str(self.columns[campo][1]).upper().count('INTEGER') == 1:
+			return False
+		elif str(self.columns[campo][1]).upper().count('SMALLINT') == 1:
+			return False
+		elif str(self.columns[campo][1]).upper().count('TINYINT') == 1:
+			return False
+		else:
+			return True
+	
 class select_table_panel( wx.Panel ):
 	"""docstring for select_table_panel"""
 
@@ -922,7 +930,7 @@ class select_table_panel( wx.Panel ):
 		print( "----------------" )
 		print(self.lista.GetItemText(event.GetIndex(),0))
 		print( event.GetIndex() )
-		self.lista.DeleteItem(event.GetIndex())
+		#self.lista.DeleteItem(event.GetIndex())
 		print( "----------------" )
 
 	def list_data(self):
@@ -951,6 +959,9 @@ class select_table_panel( wx.Panel ):
 		NewBD = Add_rows_dialog(self, self.table, self.db)
 		NewBD.ShowModal()
 		NewBD.Destroy()
+
+		self.lista.ClearAll()
+		self.list_data()
 
 	def truncate(self, evt):
 		r = self.controller.execute_sql("truncate table "+ self.table , self.db)
