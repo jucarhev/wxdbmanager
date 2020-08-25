@@ -886,6 +886,7 @@ class select_table_panel( wx.Panel ):
 	"""docstring for select_table_panel"""
 
 	controller = Controller()
+	array_delete = []
 
 	def __init__(self, parent, db, table):
 		wx.Panel.__init__ ( self, parent=parent, id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.TAB_TRAVERSAL )
@@ -897,7 +898,7 @@ class select_table_panel( wx.Panel ):
 
 		self.tool2 = wx.ToolBar( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TB_HORIZONTAL )
 		self.tool_add_row = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_add.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add", wx.EmptyString, None ) 
-		self.f1 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_remove.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Row remove", wx.EmptyString, None )
+		self.tool_row_remove = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_remove.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Row remove", wx.EmptyString, None )
 		self.f4 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Row edit", wx.EmptyString, None ) 
 		self.tool2.AddSeparator()
 		self.tool_column_add = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_add.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add new column", wx.EmptyString, None )
@@ -923,15 +924,57 @@ class select_table_panel( wx.Panel ):
 		self.Bind(wx.EVT_TOOL, self.column_edit , self.tool_column_edit )
 
 		self.Bind(wx.EVT_TOOL, self.add_row , self.tool_add_row )
+		self.Bind(wx.EVT_TOOL, self.delete_row , self.tool_row_remove)
 
 		self.Bind(wx.EVT_LIST_ITEM_SELECTED ,self.click, self.lista)
 
 	def click(self,event):
-		print( "----------------" )
-		print(self.lista.GetItemText(event.GetIndex(),0))
-		print( event.GetIndex() )
+		#print( "----------------" )
+
+		x = 0
+		for xy in self.columns:
+			#print(self.lista.GetItemText(event.GetIndex(),x))
+			self.array_delete.append( self.lista.GetItemText(event.GetIndex(),x) )
+			x = x + 1
+
 		#self.lista.DeleteItem(event.GetIndex())
-		print( "----------------" )
+		#print( "----------------" )
+
+	def delete_row(self, evt):
+		#self.columns
+		y = 0
+		sql = 'DELETE FROM ' + self.table + ' WHERE '
+		for x in self.columns:
+			if self.validacion(y) == False:
+				sql = sql + str(self.columns[y][0]) + '=' +  str(self.array_delete[y]) + ' AND '
+			else:
+				sql = sql + str(self.columns[y][0]) + '="' +  str(self.array_delete[y]) + '" AND '
+			y=y+1
+
+		sql = sql.rstrip(' AND ') + ';'
+		# DELETE FROM test2 WHERE id=3 AND name="Jose" AND email="jose@gmail.com" AND country="Mexico" AND direction="Buss";
+
+		r = self.controller.execute_sql(sql , self.db)
+		if r == None:
+			wx.MessageBox("Eliminado", 'Info',wx.OK | wx.ICON_INFORMATION)
+			self.Close()
+		else:
+			wx.MessageBox(str(r), 'Info',wx.OK | wx.ICON_INFORMATION)
+
+		self.lista.ClearAll()
+		self.list_data()
+
+	def validacion(self, campo=''):
+		if str(self.columns[campo][1]).upper().count('INT') == 1:
+			return False
+		elif str(self.columns[campo][1]).upper().count('INTEGER') == 1:
+			return False
+		elif str(self.columns[campo][1]).upper().count('SMALLINT') == 1:
+			return False
+		elif str(self.columns[campo][1]).upper().count('TINYINT') == 1:
+			return False
+		else:
+			return True
 
 	def list_data(self):
 		rows = self.controller.get_columns_from_table(self.table, self.db)
