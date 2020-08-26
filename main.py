@@ -16,6 +16,7 @@ class main ( wx.Frame ):
 
 	is_connect = False
 	database_old_selected = ''
+	item_selected = None
 	
 	def __init__( self, parent ):
 
@@ -37,7 +38,14 @@ class main ( wx.Frame ):
 		
 		self.m_toolBar1 = self.CreateToolBar( wx.TB_HORIZONTAL, wx.ID_ANY ) 
 		self.Connection_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/025-settings-1.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/021-code.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/011-view.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/012-user.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/013-function.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/015-settings.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/016-analytics.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
 		
+
 		self.m_toolBar1.Realize() 
 		
 		bSizer1 = wx.BoxSizer( wx.HORIZONTAL )
@@ -113,6 +121,7 @@ class main ( wx.Frame ):
 		#print(self.database_old_selected)
 		items =  event.GetItem()
 		db_nodo = self.tree.GetItemText(items)
+		self.item_selected = db_nodo
 
 		if db_nodo != 'Databases':
 			if self.check_is_database(items) == 1:
@@ -193,7 +202,21 @@ class main ( wx.Frame ):
 			self.add_items_tree()
 
 		elif item == 'Drop Table':
-			pass
+			print( self.item_selected )
+			
+			dlg = wx.MessageDialog(None, "Do you want to delete this database?",'Delete',wx.YES_NO | wx.ICON_QUESTION)
+			result = dlg.ShowModal()
+
+			if result == wx.ID_YES:
+				n = self.controller.execute_sql("DROP TABLE " + self.item_selected , self.database_active)
+				if n == None:
+					wx.MessageBox("Table delete", 'Info',wx.OK | wx.ICON_INFORMATION)
+				else:
+					wx.MessageBox(str(n), 'Info',wx.OK | wx.ICON_INFORMATION)
+			
+			self.tree.DeleteAllItems()
+			self.add_items_tree()
+			
 
 		elif item == 'New Table':
 			NewBD = new_table_dialog(self, self.database_active)
@@ -881,7 +904,143 @@ class Add_rows_dialog ( wx.Dialog ):
 			return False
 		else:
 			return True
-	
+
+class Edit_rows_dialog ( wx.Dialog ):
+
+	controller = Controller()
+
+	def __init__( self, parent, table, db, array ):
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Add rows", pos = wx.DefaultPosition, size = wx.Size( 451,258 ), style = wx.DEFAULT_DIALOG_STYLE )
+
+		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+
+		self.table = table
+		self.db = db
+		self.array = array
+
+		self.values = []
+		self.set_data_to_field()
+
+		bSizer1 = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_scrolledWindow1 = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.HSCROLL|wx.VSCROLL )
+		self.m_scrolledWindow1.SetScrollRate( 5, 5 )
+		bSizer2 = wx.BoxSizer( wx.VERTICAL )
+
+		gSizer1 = wx.GridSizer( 0, 2, 0, 0 )
+
+		x = 0
+
+		# ________________________________
+		for key in self.keys:
+			lbl = wx.StaticText( self.m_scrolledWindow1, wx.ID_ANY, key , wx.DefaultPosition, wx.DefaultSize, 0 )
+			lbl.Wrap( -1 )
+
+			gSizer1.Add( lbl, 0, wx.ALL, 5 )
+
+			if self.Primary_key == key:
+				txt = wx.TextCtrl( self.m_scrolledWindow1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_READONLY )
+			else:
+				txt = wx.TextCtrl( self.m_scrolledWindow1, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+
+			gSizer1.Add( txt, 0, wx.ALL, 5 )
+
+			txt.SetValue(array[x])
+
+			x = x + 1
+			
+			self.values.append( txt )
+
+		# ________________________________
+
+		bSizer2.Add( gSizer1, 1, wx.EXPAND, 5 )
+
+		self.m_panel2 = wx.Panel( self.m_scrolledWindow1, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
+		bSizer4 = wx.BoxSizer( wx.HORIZONTAL )
+
+		btnSave = wx.Button( self.m_panel2, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer4.Add( btnSave, 0, wx.ALL, 5 )
+
+
+		self.m_panel2.SetSizer( bSizer4 )
+		self.m_panel2.Layout()
+		bSizer4.Fit( self.m_panel2 )
+		bSizer2.Add( self.m_panel2, 0, wx.EXPAND |wx.ALL, 5 )
+
+
+		self.m_scrolledWindow1.SetSizer( bSizer2 )
+		self.m_scrolledWindow1.Layout()
+		bSizer2.Fit( self.m_scrolledWindow1 )
+		bSizer1.Add( self.m_scrolledWindow1, 1, wx.EXPAND |wx.ALL, 5 )
+
+
+		self.SetSizer( bSizer1 )
+		self.Layout()
+
+		self.Bind(wx.EVT_BUTTON, self.update_data ,btnSave )
+
+	def set_data_to_field(self):
+		self.columns = self.controller.get_columns_from_table(self.table, self.db)
+
+		self.keys = []
+		y = 0
+		for x in self.columns:
+			self.keys.append( x[0] )
+			if x[3] == 'PRI':
+				self.Primary_key = x[0]
+				self.id_value = self.array[y]
+
+			if self.validacion(y) == False:
+				self.type_key = False
+
+			y = y + 1
+
+		self.nums = len(self.keys)
+
+	def validacion(self, campo=''):
+		if str(self.columns[campo][1]).upper().count('INT') == 1:
+			return False
+		elif str(self.columns[campo][1]).upper().count('INTEGER') == 1:
+			return False
+		elif str(self.columns[campo][1]).upper().count('SMALLINT') == 1:
+			return False
+		elif str(self.columns[campo][1]).upper().count('TINYINT') == 1:
+			return False
+		else:
+			return True
+
+	def update_data(self, evt):
+		sql = "update " + self.table + " set "
+		
+		it = 0
+		for i in self.columns:
+			if i[0] == self.Primary_key:
+				it = it + 1
+			else:
+				if self.validacion(it) == True:
+					sql = sql + ' ' + i[0] + '= "' + self.values[it].GetValue() + '" ,'
+				else:
+					sql = sql + ' ' + i[0] + '= ' + self.values[it].GetValue() + ' ,'
+
+				it = it + 1
+
+		sql = sql.rstrip(",")
+		if self.type_key == False:
+			sql = sql + " where " + self.Primary_key + "=" + str(self.id_value)
+		else:
+			sql = sql + " where " + self.Primary_key + '="' + str(self.id_value) + '"'
+
+		print("_------------_")
+		print(sql)
+		n = self.controller.execute_sql(sql, self.db)
+		print(n)
+		
+		if n == None:
+			wx.MessageBox("Sucess", 'Info',wx.OK | wx.ICON_INFORMATION)
+			self.Close()
+		else:
+			wx.MessageBox(str(n), 'Info',wx.OK | wx.ICON_INFORMATION)
+
 class select_table_panel( wx.Panel ):
 	"""docstring for select_table_panel"""
 
@@ -899,7 +1058,7 @@ class select_table_panel( wx.Panel ):
 		self.tool2 = wx.ToolBar( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TB_HORIZONTAL )
 		self.tool_add_row = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_add.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add", wx.EmptyString, None ) 
 		self.tool_row_remove = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_remove.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Row remove", wx.EmptyString, None )
-		self.f4 = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Row edit", wx.EmptyString, None ) 
+		self.tool_edit_row = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/row_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Row edit", wx.EmptyString, None ) 
 		self.tool2.AddSeparator()
 		self.tool_column_add = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_add.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Add new column", wx.EmptyString, None )
 		self.tool_column_edit = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_edit.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Column edit", wx.EmptyString, None ) 
@@ -923,6 +1082,7 @@ class select_table_panel( wx.Panel ):
 		self.Bind(wx.EVT_TOOL, self.column_remove ,self.tool_column_remove )
 		self.Bind(wx.EVT_TOOL, self.column_edit , self.tool_column_edit )
 
+		self.Bind(wx.EVT_TOOL, self.edit_row , self.tool_edit_row )
 		self.Bind(wx.EVT_TOOL, self.add_row , self.tool_add_row )
 		self.Bind(wx.EVT_TOOL, self.delete_row , self.tool_row_remove)
 
@@ -933,9 +1093,11 @@ class select_table_panel( wx.Panel ):
 
 		x = 0
 		for xy in self.columns:
-			#print(self.lista.GetItemText(event.GetIndex(),x))
+			print(self.lista.GetItemText(event.GetIndex(),x))
 			self.array_delete.append( self.lista.GetItemText(event.GetIndex(),x) )
 			x = x + 1
+
+
 
 		#self.lista.DeleteItem(event.GetIndex())
 		#print( "----------------" )
@@ -953,6 +1115,8 @@ class select_table_panel( wx.Panel ):
 
 		sql = sql.rstrip(' AND ') + ';'
 		# DELETE FROM test2 WHERE id=3 AND name="Jose" AND email="jose@gmail.com" AND country="Mexico" AND direction="Buss";
+		# DELETE FROM test1 WHERE id=4 AND name="Martin";
+		print( sql )
 
 		r = self.controller.execute_sql(sql , self.db)
 		if r == None:
@@ -1000,6 +1164,14 @@ class select_table_panel( wx.Panel ):
 
 	def add_row(self, event):
 		NewBD = Add_rows_dialog(self, self.table, self.db)
+		NewBD.ShowModal()
+		NewBD.Destroy()
+
+		self.lista.ClearAll()
+		self.list_data()
+
+	def edit_row(self, evt):
+		NewBD = Edit_rows_dialog(self, self.table, self.db, self.array_delete)
 		NewBD.ShowModal()
 		NewBD.Destroy()
 
