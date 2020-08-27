@@ -5,6 +5,8 @@ import wx.xrc
 import wx.aui
 import sys, os
 import re
+import wx.adv
+
 from controller import Controller
 
 class main ( wx.Frame ):
@@ -29,21 +31,22 @@ class main ( wx.Frame ):
 		self.check_connection()
 
 	def gui(self):
-		
+		"""
 		self.m_menubar1 = wx.MenuBar( 0 )
 		self.m_menu1 = wx.Menu()
 		self.m_menubar1.Append( self.m_menu1, u"File" ) 
 		
 		self.SetMenuBar( self.m_menubar1 )
+		"""
 		
 		self.m_toolBar1 = self.CreateToolBar( wx.TB_HORIZONTAL, wx.ID_ANY ) 
 		self.Connection_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/025-settings-1.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
 		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/021-code.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/011-view.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/012-user.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/013-function.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/015-settings.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/016-analytics.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.View_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/011-view.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.Users_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/012-user.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.Functions_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/013-function.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.Settings_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/015-settings.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
+		self.Analitics_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/016-analytics.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
 		
 
 		self.m_toolBar1.Realize() 
@@ -58,6 +61,8 @@ class main ( wx.Frame ):
 		self.notebook = wx.aui.AuiNotebook( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.aui.AUI_NB_DEFAULT_STYLE )
 		self.m_panel1 = wx.Panel( self.notebook, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
 		
+		self.notebook.AddPage( about_panel(self.notebook), u"WxDBManager")
+		
 		bSizer1.Add( self.notebook, 5, wx.EXPAND |wx.ALL, 5  )
 		
 		self.SetSizer( bSizer1 )
@@ -68,7 +73,21 @@ class main ( wx.Frame ):
 		self.SetTitle("WxDBManager")
 		self.Show()
 
-		self.Bind(wx.EVT_TOOL,self.conection_manager,self.Connection_tool)
+		self.Bind(wx.EVT_TOOL, self.conection_manager, self.Connection_tool)
+		self.Bind(wx.EVT_TOOL, self.console, self.Console_tool)
+		
+
+		self.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.notebook_)
+
+		self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.sert)
+
+	def sert(self, evt):
+		print( "==========================> double click " )
+
+	def notebook_(self, evt):
+		n = self.notebook.GetPageCount()
+		if n == 0:
+			self.notebook.AddPage( about_panel(self.notebook), u"WxDBManager")
 
 	def check_connection(self):
 		print("# Verificanco conexion")
@@ -88,10 +107,8 @@ class main ( wx.Frame ):
 		NewBD.ShowModal()
 		NewBD.Destroy()
 
-		#self.Destroy()
-		
-
-		#self.__init__(None)
+	def console(self, evt):
+		self.notebook.AddPage( console_panel(self.notebook), u"Console")
 
 	def add_items_tree(self):
 		root = self.tree.AddRoot('Databases')
@@ -1065,6 +1082,7 @@ class select_table_panel( wx.Panel ):
 		self.tool_column_remove = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/column_remove.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Column remove", wx.EmptyString, None ) 
 		self.tool2.AddSeparator() 
 		self.tool_truncate = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons_db/icons_32x32_png/vaciar.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Truncate table", wx.EmptyString, None ) 
+		self.tool_refresh = self.tool2.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/refresh.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, u"Truncate table", wx.EmptyString, None ) 
 		
 		self.tool2.Realize()
 		
@@ -1086,6 +1104,8 @@ class select_table_panel( wx.Panel ):
 		self.Bind(wx.EVT_TOOL, self.add_row , self.tool_add_row )
 		self.Bind(wx.EVT_TOOL, self.delete_row , self.tool_row_remove)
 
+		self.Bind(wx.EVT_TOOL, self.refresh_table, self.tool_refresh )
+
 		self.Bind(wx.EVT_LIST_ITEM_SELECTED ,self.click, self.lista)
 
 	def click(self,event):
@@ -1101,6 +1121,10 @@ class select_table_panel( wx.Panel ):
 
 		#self.lista.DeleteItem(event.GetIndex())
 		#print( "----------------" )
+
+	def refresh_table(self, evt):
+		self.lista.ClearAll()
+		self.list_data()
 
 	def delete_row(self, evt):
 		#self.columns
@@ -1244,6 +1268,162 @@ class describe_table_panel( wx.Panel ):
 			index = self.lista.InsertStringItem(sys.maxsize, str(row[0]))
 			for er in range(1,len(rows)):
 				self.lista.SetStringItem(index, er, str(row[er]))
+
+class about_panel( wx.Panel ):
+	controller = Controller()
+
+	def __init__(self, parent ):
+		wx.Panel.__init__ ( self, parent=parent, id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.TAB_TRAVERSAL )
+
+		bSizer15 = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_scrolledWindow2 = wx.ScrolledWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.HSCROLL|wx.VSCROLL )
+		self.m_scrolledWindow2.SetScrollRate( 5, 5 )
+		bSizer16 = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_staticText21 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"WXDBManager", wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL )
+		self.m_staticText21.Wrap( -1 )
+
+		self.m_staticText21.SetFont( wx.Font( 20, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, "Arial Black" ) )
+
+		bSizer16.Add( self.m_staticText21, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+		self.m_bitmap2 = wx.StaticBitmap( self.m_scrolledWindow2, wx.ID_ANY, wx.Bitmap( u"icons/wxdbmanager_232x232.png", wx.BITMAP_TYPE_ANY ), wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer16.Add( self.m_bitmap2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+		self.m_staticText22 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Un administrador de base de datos para mysql\ndiseñado con wxpython y conector mysql.", wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL )
+		self.m_staticText22.Wrap( -1 )
+
+		bSizer16.Add( self.m_staticText22, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+		self.m_staticText23 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Version: 1.0", wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL )
+		self.m_staticText23.Wrap( -1 )
+
+		self.m_staticText23.SetFont( wx.Font( 12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, "Arial" ) )
+
+		bSizer16.Add( self.m_staticText23, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+		self.m_hyperlink4 = wx.adv.HyperlinkCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"Repositorio", u"https://github.com/jucarhev/wxdbmanager", wx.DefaultPosition, wx.DefaultSize, wx.adv.HL_ALIGN_CENTRE|wx.adv.HL_DEFAULT_STYLE )
+		bSizer16.Add( self.m_hyperlink4, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+		bSizer17 = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.m_bitmap3 = wx.StaticBitmap( self.m_scrolledWindow2, wx.ID_ANY, wx.Bitmap( u"icons/024-github.png", wx.BITMAP_TYPE_ANY ), wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer17.Add( self.m_bitmap3, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+		self.m_hyperlink1 = wx.adv.HyperlinkCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"Github", u"https://github.com/", wx.DefaultPosition, wx.DefaultSize, wx.adv.HL_DEFAULT_STYLE )
+		bSizer17.Add( self.m_hyperlink1, 0, wx.ALL, 5 )
+
+		self.m_bitmap4 = wx.StaticBitmap( self.m_scrolledWindow2, wx.ID_ANY, wx.Bitmap( u"icons/022-mysql.png", wx.BITMAP_TYPE_ANY ), wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer17.Add( self.m_bitmap4, 0, wx.ALL, 5 )
+
+		self.m_hyperlink2 = wx.adv.HyperlinkCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"MySQL", u"https://www.mysql.com/", wx.DefaultPosition, wx.DefaultSize, wx.adv.HL_DEFAULT_STYLE )
+		bSizer17.Add( self.m_hyperlink2, 0, wx.ALL, 5 )
+
+		self.m_bitmap5 = wx.StaticBitmap( self.m_scrolledWindow2, wx.ID_ANY, wx.Bitmap( u"icons/023-python.png", wx.BITMAP_TYPE_ANY ), wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizer17.Add( self.m_bitmap5, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+		self.m_hyperlink3 = wx.adv.HyperlinkCtrl( self.m_scrolledWindow2, wx.ID_ANY, u"Python", u"https://www.python.org/", wx.DefaultPosition, wx.DefaultSize, wx.adv.HL_DEFAULT_STYLE )
+		bSizer17.Add( self.m_hyperlink3, 0, wx.ALL, 5 )
+
+
+		bSizer16.Add( bSizer17, 0, wx.ALL|wx.EXPAND, 5 )
+
+
+		self.m_scrolledWindow2.SetSizer( bSizer16 )
+		self.m_scrolledWindow2.Layout()
+		bSizer16.Fit( self.m_scrolledWindow2 )
+		bSizer15.Add( self.m_scrolledWindow2, 1, wx.EXPAND |wx.ALL, 5 )
+
+
+		self.SetSizer( bSizer15 )
+		self.Layout()
+
+class console_panel( wx.Panel ):
+
+	controller = Controller()
+
+	def __init__( self, parent, id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size( 500,300 ), style = wx.TAB_TRAVERSAL, name = wx.EmptyString ):
+		wx.Panel.__init__ ( self, parent, id = id, pos = pos, size = size, style = style, name = name )
+
+		bSizer16 = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_toolBar1 = wx.ToolBar( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TB_HORIZONTAL )
+		self.m_tool1 = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/play-button.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None )
+
+		self.m_tool2 = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/broom.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None )
+
+		self.m_toolBar1.Realize()
+
+		bSizer16.Add( self.m_toolBar1, 0, wx.EXPAND, 5 )
+
+		self.m_textCtrl14 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
+		bSizer16.Add( self.m_textCtrl14, 1, wx.ALL|wx.EXPAND, 5 )
+
+		self.m_listCtrl1 = wx.ListCtrl( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LC_REPORT )
+		bSizer16.Add( self.m_listCtrl1, 0, wx.ALL|wx.EXPAND, 5 )
+
+		self.showMessage = wx.StaticText( self, wx.ID_ANY, u"", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.showMessage.Wrap( -1 )
+
+		bSizer16.Add( self.showMessage, 0, wx.ALL, 5 )
+
+
+		self.SetSizer( bSizer16 )
+		self.Layout()
+
+		self.Bind(wx.EVT_TOOL, self.get_query, self.m_tool1)
+
+	def get_query(self, evt):
+		sql =  self.m_textCtrl14.GetValue()
+		self.controller.variable_connection()
+		database = ''
+
+		array = sql.split(';')
+		if array[0].upper().count("USE") == 1:
+			array2 = str(array[0]).split(' ')
+			database = array2[1]
+
+			array.pop(0)
+
+		for row in array:
+			if str(row).upper().count("SHOW") == 1 or str(row).upper().count("SELECT") == 1:
+				self.get_list_data(database, row)
+			else:
+				n = self.controller.execute_sql(row,'')
+
+				if n == None:
+					self.showMessage.SetLabel("Sucess")
+				else:
+					self.showMessage.SetLabel(str(n))
+
+	def get_list_data(self, database, row):
+		if row.upper().count("SHOW TABLES") == 1:
+			self.m_listCtrl1.ClearAll()
+			self.m_listCtrl1.InsertColumn(0, "Columns")
+			self.print_data(1, row, database)
+		if row.upper().count("SHOW COLUMNS") == 1:
+			self.m_listCtrl1.ClearAll()
+			self.m_listCtrl1.InsertColumn(0, "Columns")
+			self.print_data(1, row, database)
+		elif row.upper().count("SHOW DATABASES") == 1 or row.upper().count("SHOW SCHEMAS") == 1:
+			self.m_listCtrl1.ClearAll()
+			self.m_listCtrl1.InsertColumn(0, "Databases")
+			self.print_data(1, row, database)
+
+	def print_data(self, c, row, database):
+
+		rows2 = ''
+		rows2 = self.controller.return_data(row, database)
+
+		arreglo = []
+		for row in rows2:
+			arreglo.append(row)
+
+		for ar in arreglo:
+			index = self.m_listCtrl1.InsertStringItem(sys.maxsize, str(ar[0]))
+			for er in range(1,c):
+				self.m_listCtrl1.SetStringItem(index, er, str(ar[er]))
 
 app = wx.App()
 main(None)
