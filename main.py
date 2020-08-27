@@ -1373,6 +1373,7 @@ class console_panel( wx.Panel ):
 		self.Layout()
 
 		self.Bind(wx.EVT_TOOL, self.get_query, self.m_tool1)
+		self.Bind(wx.EVT_TOOL, self.clean, self.m_tool2)
 
 	def get_query(self, evt):
 		sql =  self.m_textCtrl14.GetValue()
@@ -1400,30 +1401,58 @@ class console_panel( wx.Panel ):
 	def get_list_data(self, database, row):
 		if row.upper().count("SHOW TABLES") == 1:
 			self.m_listCtrl1.ClearAll()
-			self.m_listCtrl1.InsertColumn(0, "Columns")
+			self.m_listCtrl1.InsertColumn(0, "Tables")
 			self.print_data(1, row, database)
-		if row.upper().count("SHOW COLUMNS") == 1:
+		if row.upper().count("SHOW COLUMNS FROM ") == 1:
 			self.m_listCtrl1.ClearAll()
-			self.m_listCtrl1.InsertColumn(0, "Columns")
-			self.print_data(1, row, database)
+			self.list_data(row, database)
 		elif row.upper().count("SHOW DATABASES") == 1 or row.upper().count("SHOW SCHEMAS") == 1:
 			self.m_listCtrl1.ClearAll()
 			self.m_listCtrl1.InsertColumn(0, "Databases")
 			self.print_data(1, row, database)
+		elif row.upper().count("SELECT * FROM ") == 1:
+			pass
 
 	def print_data(self, c, row, database):
-
 		rows2 = ''
 		rows2 = self.controller.return_data(row, database)
+		#print(rows2)
 
-		arreglo = []
-		for row in rows2:
-			arreglo.append(row)
+		try:
+			arreglo = []
+			for row in rows2:
+				arreglo.append(row)
 
-		for ar in arreglo:
-			index = self.m_listCtrl1.InsertStringItem(sys.maxsize, str(ar[0]))
-			for er in range(1,c):
-				self.m_listCtrl1.SetStringItem(index, er, str(ar[er]))
+			for ar in arreglo:
+				index = self.m_listCtrl1.InsertStringItem(sys.maxsize, str(ar[0]))
+				for er in range(1,c):
+					self.m_listCtrl1.SetStringItem(index, er, str(ar[er]))
+		except Exception as e:
+			print( rows2 )
+			self.showMessage.SetLabel( str(rows2) )
+		
+
+	def list_data(self, row, database):
+		rows = row.split(' ')
+		table = rows[3]
+
+		self.m_listCtrl1.InsertColumn(0, "Field")
+		self.m_listCtrl1.InsertColumn(1, "Type")
+		self.m_listCtrl1.InsertColumn(2, "Null")
+		self.m_listCtrl1.InsertColumn(3, "Key")
+		self.m_listCtrl1.InsertColumn(4, "Default")
+		self.m_listCtrl1.InsertColumn(5, "Extra")
+
+		rows = self.controller.get_columns_from_table(table, database)
+		
+		for row in rows:
+			index = self.m_listCtrl1.InsertStringItem(sys.maxsize, str(row[0]))
+			for er in range(1,len(rows)):
+				self.m_listCtrl1.SetStringItem(index, er, str(row[er]))
+
+	def clean(self, evt):
+		self.m_listCtrl1.ClearAll()
+		self.m_textCtrl14.SetValue('')
 
 app = wx.App()
 main(None)
