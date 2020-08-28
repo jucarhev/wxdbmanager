@@ -1276,7 +1276,7 @@ class about_panel( wx.Panel ):
 
 		bSizer16.Add( self.m_staticText22, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 
-		self.m_staticText23 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Version: 1.0", wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL )
+		self.m_staticText23 = wx.StaticText( self.m_scrolledWindow2, wx.ID_ANY, u"Version: 0.2", wx.DefaultPosition, wx.DefaultSize, wx.ALIGN_CENTER_HORIZONTAL )
 		self.m_staticText23.Wrap( -1 )
 
 		self.m_staticText23.SetFont( wx.Font( 12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, "Arial" ) )
