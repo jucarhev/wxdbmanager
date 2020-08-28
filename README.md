@@ -1,6 +1,6 @@
 # wxdbmanager
-administrador de base de datos en wxpython y mysql  
-MySQL gui in wxpyton
+Administrador de base de datos en wxpython y mysql. Permite hacer acciones relacionadas con la base de datos tales como, crear bases de datos y tables, asi como la administracion de datos.
+
 ![](https://github.com/jucarhev/wxdbmanager/blob/master/001.PNG)
 
 ## Caracteristicas
@@ -10,9 +10,12 @@ MySQL gui in wxpyton
 4. Solo para mysql
 
 ## Nota
+Hay acciones pendientes:
 - [ ] Testing final
 - [ ] Revision de codigo
 - [ ] Busqueda de errores
+- [ ] Gestion de suarios
+- [ ] Archivos de configuracion
 
 ## Requerimientos
 python >3
