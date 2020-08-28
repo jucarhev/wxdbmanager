@@ -30,24 +30,12 @@ class main ( wx.Frame ):
 
 		self.check_connection()
 
-	def gui(self):
-		"""
-		self.m_menubar1 = wx.MenuBar( 0 )
-		self.m_menu1 = wx.Menu()
-		self.m_menubar1.Append( self.m_menu1, u"File" ) 
-		
-		self.SetMenuBar( self.m_menubar1 )
-		"""
-		
+	def gui(self):		
 		self.m_toolBar1 = self.CreateToolBar( wx.TB_HORIZONTAL, wx.ID_ANY ) 
 		self.Connection_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/025-settings-1.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
 		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/021-code.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		self.View_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/011-view.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
 		self.Users_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/012-user.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		self.Functions_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/013-function.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
 		self.Settings_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/015-settings.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		self.Analitics_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/016-analytics.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		
 
 		self.m_toolBar1.Realize() 
 		
@@ -79,7 +67,7 @@ class main ( wx.Frame ):
 
 		self.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSED, self.notebook_)
 
-		self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.sert)
+		#self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.sert)
 
 	def sert(self, evt):
 		print( "==========================> double click " )
@@ -133,6 +121,7 @@ class main ( wx.Frame ):
 				tree.SetPyData(item, None)
 				tree.SetItemImage(item, img_database, wx.TreeItemIcon_Normal)
 				self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, tree)
+				#self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnSelChanged, tree)
 
 	def OnSelChanged(self,event):
 		#print(self.database_old_selected)
@@ -156,7 +145,7 @@ class main ( wx.Frame ):
 				self.option_menu = ['New Table', 'Drop DB']
 			else:
 				self.table_active = db_nodo
-				self.option_menu = ['Select','Edit','Truncate','Add','Drop Table','Describe']
+				self.option_menu = ['Select','Drop Table','Describe']
 		else:
 			self.option_menu = ['New DB']
 
@@ -243,17 +232,8 @@ class main ( wx.Frame ):
 			self.tree.DeleteChildren(self.items_database_list.get(self.database_active))
 			self.add_tables_nodo(self.items_database_list.get(self.database_active), self.database_active)
 
-		elif item == 'Edit':
-			pass
-
-		elif item == 'Truncate':
-			pass
-
 		elif item == 'Describe':
 			self.notebook.AddPage( describe_table_panel(self.notebook, self.database_active, self.table_active), u"Describe "+ self.table_active)
-		
-		elif item == 'Add':
-			pass
 
 class Dialog_Connection ( wx.Dialog ):
 
@@ -1384,14 +1364,13 @@ class console_panel( wx.Panel ):
 		if array[0].upper().count("USE") == 1:
 			array2 = str(array[0]).split(' ')
 			database = array2[1]
-
-			array.pop(0)
-
+		
 		for row in array:
 			if str(row).upper().count("SHOW") == 1 or str(row).upper().count("SELECT") == 1:
 				self.get_list_data(database, row)
 			else:
-				n = self.controller.execute_sql(row,'')
+				print(row)
+				n = self.controller.execute_sql(row,database)
 
 				if n == None:
 					self.showMessage.SetLabel("Sucess")
@@ -1405,13 +1384,28 @@ class console_panel( wx.Panel ):
 			self.print_data(1, row, database)
 		if row.upper().count("SHOW COLUMNS FROM ") == 1:
 			self.m_listCtrl1.ClearAll()
-			self.list_data(row, database)
+			self.list_data1(row, database)
 		elif row.upper().count("SHOW DATABASES") == 1 or row.upper().count("SHOW SCHEMAS") == 1:
 			self.m_listCtrl1.ClearAll()
 			self.m_listCtrl1.InsertColumn(0, "Databases")
 			self.print_data(1, row, database)
 		elif row.upper().count("SELECT * FROM ") == 1:
-			pass
+			sql = row.split(' ')
+			if sql[1] == '*':
+				self.select( row, database )
+			else:
+				self.select( row, database, False )
+		elif check(row) == 1:
+			print(row)
+		else:
+			self.select( row, database, False )
+
+	def check(self, row):
+		datos = [ 'CREATE', 'UPDATE', 'DELETE', 'INSERT', 'ALTER', 'DELIMITER', 'CHECK', 'LOAD' ]
+		for x in datos:
+			if row.upper().count(x) == 1:
+				return 1
+
 
 	def print_data(self, c, row, database):
 		rows2 = ''
@@ -1431,8 +1425,7 @@ class console_panel( wx.Panel ):
 			print( rows2 )
 			self.showMessage.SetLabel( str(rows2) )
 		
-
-	def list_data(self, row, database):
+	def list_data1(self, row, database):
 		rows = row.split(' ')
 		table = rows[3]
 
@@ -1449,6 +1442,64 @@ class console_panel( wx.Panel ):
 			index = self.m_listCtrl1.InsertStringItem(sys.maxsize, str(row[0]))
 			for er in range(1,len(rows)):
 				self.m_listCtrl1.SetStringItem(index, er, str(row[er]))
+
+	def select(self, sql, database, columns=True ):
+		self.m_listCtrl1.ClearAll()
+		table = ''
+		try:
+			if columns == True:
+				array = sql.split(' ')
+				table = array[3] 
+				self.list_data(table, database )
+			else:
+				self.lista_data2(sql, database )
+
+
+		except Exception as e:
+			raise e
+
+	def list_data(self, table, db):
+		rows = self.controller.get_columns_from_table(table, db)
+		self.columns = rows
+		c = 0
+		for row in rows:
+			if c == 0:
+				self.primera_columna_db = str(row[0])
+			self.m_listCtrl1.InsertColumn(c, row[0])
+			c = c+1
+
+		rows = ''
+		rows = self.controller.get_data(table,db)
+
+		arreglo = []
+		for row in rows:
+			arreglo.append(row)
+
+		for ar in arreglo:
+			index = self.m_listCtrl1.InsertStringItem(sys.maxsize, str(ar[0]))
+			for er in range(1,c):
+				self.m_listCtrl1.SetStringItem(index, er, str(ar[er]))
+
+	def lista_data2(self, sql, database):
+		rows = self.controller.return_data(sql, database)
+		sql = sql.replace( "select ",'SELECT ').replace( 'SELECT ', '')
+		sql = sql.replace( " from ",' FROM ').replace( ' FROM ', '_____')
+
+		array = sql.split('_____')
+
+		c = 0
+		for x in array[0].split(','):
+			self.m_listCtrl1.InsertColumn(c, x)
+			c = c + 1
+
+		arreglo = []
+		for row in rows:
+			arreglo.append(row)
+
+		for ar in arreglo:
+			index = self.m_listCtrl1.InsertStringItem(sys.maxsize, str(ar[0]))
+			for er in range(1,c):
+				self.m_listCtrl1.SetStringItem(index, er, str(ar[er]))
 
 	def clean(self, evt):
 		self.m_listCtrl1.ClearAll()
