@@ -34,8 +34,6 @@ class main ( wx.Frame ):
 		self.m_toolBar1 = self.CreateToolBar( wx.TB_HORIZONTAL, wx.ID_ANY ) 
 		self.Connection_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/025-settings-1.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
 		self.Console_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/021-code.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		self.Users_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/012-user.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
-		self.Settings_tool = self.m_toolBar1.AddLabelTool( wx.ID_ANY, u"tool", wx.Bitmap( u"icons/015-settings.png", wx.BITMAP_TYPE_ANY ), wx.NullBitmap, wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None ) 
 
 		self.m_toolBar1.Realize() 
 		
@@ -70,7 +68,7 @@ class main ( wx.Frame ):
 		#self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.sert)
 
 	def sert(self, evt):
-		print( "==========================> double click " )
+		pass		
 
 	def notebook_(self, evt):
 		n = self.notebook.GetPageCount()
@@ -78,11 +76,10 @@ class main ( wx.Frame ):
 			self.notebook.AddPage( about_panel(self.notebook), u"WxDBManager")
 
 	def check_connection(self):
-		print("# Verificanco conexion")
 		m = self.controller.check_conn()
 		if m == 1:
 			#wx.MessageBox("ok", 'Info',wx.OK | wx.ICON_INFORMATION)
-			print("Ok")
+			
 			self.is_connect = True
 			self.gui()
 		else:
@@ -124,7 +121,7 @@ class main ( wx.Frame ):
 				#self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.OnSelChanged, tree)
 
 	def OnSelChanged(self,event):
-		#print(self.database_old_selected)
+		
 		items =  event.GetItem()
 		db_nodo = self.tree.GetItemText(items)
 		self.item_selected = db_nodo
@@ -200,15 +197,15 @@ class main ( wx.Frame ):
 			if result == wx.ID_YES:
 				self.controller.Database_Name=''
 				e = self.controller.drop_database(self.database_active)
-				print(e)
+				
 			else:
-				print("No pressed")
+				pass
+				
 			
 			self.tree.DeleteAllItems()
 			self.add_items_tree()
 
 		elif item == 'Drop Table':
-			print( self.item_selected )
 			
 			dlg = wx.MessageDialog(None, "Do you want to delete this database?",'Delete',wx.YES_NO | wx.ICON_QUESTION)
 			result = dlg.ShowModal()
@@ -355,7 +352,7 @@ class new_database_dialog ( wx.Dialog ):
 		db = self.txtDatabase.GetValue()
 		n = self.controller.create_new_database(db)
 		if n == '':
-			print("s")
+			pass
 		else:
 			wx.MessageBox(str(n), 'Info',wx.OK | wx.ICON_INFORMATION)
 
@@ -404,16 +401,20 @@ class new_table_dialog ( wx.Dialog ):
 		
 		self.cbxRequired = wx.CheckBox( self, wx.ID_ANY, u"Not null", wx.DefaultPosition, wx.DefaultSize, 0 )
 		gSizer2.Add( self.cbxRequired, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+		self.lbl2 = wx.StaticText( self, wx.ID_ANY, u"", wx.DefaultPosition, wx.DefaultSize, 0 )
+		gSizer2.Add( self.lbl2, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 		
 		self.cbxPrimary = wx.CheckBox( self, wx.ID_ANY, u"Primary", wx.DefaultPosition, wx.DefaultSize, 0 )
 		gSizer2.Add( self.cbxPrimary, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+		self.cbxAuto = wx.CheckBox( self, wx.ID_ANY, u"Auto increment", wx.DefaultPosition, wx.DefaultSize, 0 )
+		gSizer2.Add( self.cbxAuto, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 		
 		self.btnAdd = wx.Button( self, wx.ID_ANY, u"Add", wx.DefaultPosition, wx.DefaultSize, 0 )
 		gSizer2.Add( self.btnAdd, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 		
-		
 		bSizer7.Add( gSizer2, 1, wx.EXPAND, 5 )
-		
 		
 		bSizer3.Add( bSizer7, 1, wx.EXPAND, 5 )
 		
@@ -425,9 +426,7 @@ class new_table_dialog ( wx.Dialog ):
 		self.btnGenerate = wx.Button( self, wx.ID_ANY, u"Generar", wx.DefaultPosition, wx.DefaultSize, 0 )
 		bSizer8.Add( self.btnGenerate, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
 		
-		
 		bSizer3.Add( bSizer8, 2, wx.EXPAND, 5 )
-		
 		
 		self.SetSizer( bSizer3 )
 		self.Layout()
@@ -485,6 +484,7 @@ class new_table_dialog ( wx.Dialog ):
 		text = text[:-1]
 		text = text + ')Engine=innodb;'
 		self.controller.Database_Name= self.db
+		print(text)
 		r = self.controller.create_new_table(text,self.db)
 		if r == None:
 			wx.MessageBox("Table create", 'Info',wx.OK | wx.ICON_INFORMATION)
@@ -582,8 +582,7 @@ class add_new_column ( wx.Dialog ):
 		sql = 'ALTER TABLE '+self.table+' ADD COLUMN '+self.txtFieldName.GetValue()
 		sql = sql +' '+self.cboType.GetValue()+'('+str(self.spinLong.GetValue())+') ' + ' '+ null
 		sql =sql +self.cboAfter.GetValue()+' '+self.cboFields.GetValue()+';'
-		print(sql)
-
+		
 		n = self.controller.execute_sql(sql, self.db)
 		if n == None:
 			wx.MessageBox("Column create", 'Info',wx.OK | wx.ICON_INFORMATION)
@@ -595,9 +594,7 @@ class add_new_column ( wx.Dialog ):
 		rows = self.controller.get_columns_from_table(self.table, self.db)
 		self.cboFieldsChoices = []
 		for row in rows:
-			self.cboFieldsChoices.append(row[0])
-		
-		print(self.cboFieldsChoices)
+			self.cboFieldsChoices.append(row[0])		
 
 class edit_column ( wx.Dialog ):
 	controller = Controller()
@@ -700,11 +697,11 @@ class edit_column ( wx.Dialog ):
 		else:
 			null = ''
 
-		sql = 'ALTER TABLE '+self.table+' ADD COLUMN '+self.txtFieldName.GetValue()
+		sql = 'ALTER TABLE '+self.table+' MODIFY '+self.cboColumns.GetValue()
 		sql = sql +' '+self.cboType.GetValue()+'('+str(self.spinLong.GetValue())+') ' + ' '+ null
-		sql =sql +self.cboAfter.GetValue()+' '+self.cboFields.GetValue()+';'
-		print(sql)
-
+		if self.cboFields.GetValue() != '':
+			sql =sql +self.cboAfter.GetValue()+' '+self.cboFields.GetValue()+';'
+		print( sql )
 		n = self.controller.execute_sql(sql, self.db)
 		if n == None:
 			wx.MessageBox("Column create", 'Info',wx.OK | wx.ICON_INFORMATION)
@@ -879,7 +876,7 @@ class Add_rows_dialog ( wx.Dialog ):
 
 		sql = sql.rstrip(',') + ');'
 
-		print( sql )
+		
 		n = self.controller.execute_sql(sql, self.db)
 		
 		if n == None:
@@ -889,7 +886,6 @@ class Add_rows_dialog ( wx.Dialog ):
 			wx.MessageBox(str(n), 'Info',wx.OK | wx.ICON_INFORMATION)
 
 	def validacion(self, campo=''):
-		print(self.columns[campo][1])
 
 		if str(self.columns[campo][1]).upper().count('INT') == 1:
 			return False
@@ -1027,10 +1023,7 @@ class Edit_rows_dialog ( wx.Dialog ):
 		else:
 			sql = sql + " where " + self.Primary_key + '="' + str(self.id_value) + '"'
 
-		print("_------------_")
-		print(sql)
 		n = self.controller.execute_sql(sql, self.db)
-		print(n)
 		
 		if n == None:
 			wx.MessageBox("Sucess", 'Info',wx.OK | wx.ICON_INFORMATION)
@@ -1089,18 +1082,10 @@ class select_table_panel( wx.Panel ):
 		self.Bind(wx.EVT_LIST_ITEM_SELECTED ,self.click, self.lista)
 
 	def click(self,event):
-		#print( "----------------" )
-
 		x = 0
 		for xy in self.columns:
-			print(self.lista.GetItemText(event.GetIndex(),x))
 			self.array_delete.append( self.lista.GetItemText(event.GetIndex(),x) )
 			x = x + 1
-
-
-
-		#self.lista.DeleteItem(event.GetIndex())
-		#print( "----------------" )
 
 	def refresh_table(self, evt):
 		self.lista.ClearAll()
@@ -1118,9 +1103,6 @@ class select_table_panel( wx.Panel ):
 			y=y+1
 
 		sql = sql.rstrip(' AND ') + ';'
-		# DELETE FROM test2 WHERE id=3 AND name="Jose" AND email="jose@gmail.com" AND country="Mexico" AND direction="Buss";
-		# DELETE FROM test1 WHERE id=4 AND name="Martin";
-		print( sql )
 
 		r = self.controller.execute_sql(sql , self.db)
 		if r == None:
@@ -1190,6 +1172,9 @@ class select_table_panel( wx.Panel ):
 		else:
 			wx.MessageBox(str(r), 'Info',wx.OK | wx.ICON_INFORMATION)
 
+		self.lista.ClearAll()
+		self.list_data()
+
 	def column_remove(self, evt):
 		NewBD = remove_column(self, self.db, self.table)
 		NewBD.ShowModal()
@@ -1241,12 +1226,9 @@ class describe_table_panel( wx.Panel ):
 		self.lista.InsertColumn(5, "Extra")
 
 		rows = self.controller.get_columns_from_table(self.table, self.db)
-		print(rows)
-		#print(len(rows))
-		
 		for row in rows:
 			index = self.lista.InsertStringItem(sys.maxsize, str(row[0]))
-			for er in range(1,len(rows)):
+			for er in range(1,6):
 				self.lista.SetStringItem(index, er, str(row[er]))
 
 class about_panel( wx.Panel ):
@@ -1366,10 +1348,10 @@ class console_panel( wx.Panel ):
 			database = array2[1]
 		
 		for row in array:
-			if str(row).upper().count("SHOW") == 1 or str(row).upper().count("SELECT") == 1:
+			if str(row).upper().count("SHOW") == 1 or str(row).upper().count("SELECT") == 1  or str(row).upper().count("DESCRIBE") == 1:
 				self.get_list_data(database, row)
 			else:
-				print(row)
+				
 				n = self.controller.execute_sql(row,database)
 
 				if n == None:
@@ -1381,14 +1363,15 @@ class console_panel( wx.Panel ):
 		if row.upper().count("SHOW TABLES") == 1:
 			self.m_listCtrl1.ClearAll()
 			self.m_listCtrl1.InsertColumn(0, "Tables")
-			self.print_data(1, row, database)
-		if row.upper().count("SHOW COLUMNS FROM ") == 1:
+			
+		if row.upper().count("SHOW COLUMNS FROM ") == 1 or row.upper().count("DESCRIBE ") == 1:
+			print(row)
 			self.m_listCtrl1.ClearAll()
 			self.list_data1(row, database)
 		elif row.upper().count("SHOW DATABASES") == 1 or row.upper().count("SHOW SCHEMAS") == 1:
 			self.m_listCtrl1.ClearAll()
 			self.m_listCtrl1.InsertColumn(0, "Databases")
-			self.print_data(1, row, database)
+			
 		elif row.upper().count("SELECT * FROM ") == 1:
 			sql = row.split(' ')
 			if sql[1] == '*':
@@ -1396,7 +1379,7 @@ class console_panel( wx.Panel ):
 			else:
 				self.select( row, database, False )
 		elif check(row) == 1:
-			print(row)
+			pass
 		else:
 			self.select( row, database, False )
 
@@ -1406,11 +1389,9 @@ class console_panel( wx.Panel ):
 			if row.upper().count(x) == 1:
 				return 1
 
-
-	def print_data(self, c, row, database):
 		rows2 = ''
 		rows2 = self.controller.return_data(row, database)
-		#print(rows2)
+		
 
 		try:
 			arreglo = []
@@ -1422,12 +1403,16 @@ class console_panel( wx.Panel ):
 				for er in range(1,c):
 					self.m_listCtrl1.SetStringItem(index, er, str(ar[er]))
 		except Exception as e:
-			print( rows2 )
+			
 			self.showMessage.SetLabel( str(rows2) )
 		
 	def list_data1(self, row, database):
 		rows = row.split(' ')
-		table = rows[3]
+		table = ''
+		if len(rows) == 2:
+			table = rows[1]
+		else:
+			table = rows[3]
 
 		self.m_listCtrl1.InsertColumn(0, "Field")
 		self.m_listCtrl1.InsertColumn(1, "Type")
@@ -1440,7 +1425,7 @@ class console_panel( wx.Panel ):
 		
 		for row in rows:
 			index = self.m_listCtrl1.InsertStringItem(sys.maxsize, str(row[0]))
-			for er in range(1,len(rows)):
+			for er in range(1,6):
 				self.m_listCtrl1.SetStringItem(index, er, str(row[er]))
 
 	def select(self, sql, database, columns=True ):
@@ -1458,8 +1443,8 @@ class console_panel( wx.Panel ):
 		except Exception as e:
 			raise e
 
-	def list_data(self, table, db):
-		rows = self.controller.get_columns_from_table(table, db)
+	def list_data(self, table, database):
+		rows = self.controller.get_columns_from_table(table, database)
 		self.columns = rows
 		c = 0
 		for row in rows:
@@ -1469,7 +1454,7 @@ class console_panel( wx.Panel ):
 			c = c+1
 
 		rows = ''
-		rows = self.controller.get_data(table,db)
+		rows = self.controller.get_data(table, database)
 
 		arreglo = []
 		for row in rows:
