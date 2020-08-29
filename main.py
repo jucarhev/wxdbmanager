@@ -144,7 +144,7 @@ class main ( wx.Frame ):
 				self.table_active = db_nodo
 				self.option_menu = ['Select','Drop Table','Describe']
 		else:
-			self.option_menu = ['New DB']
+			self.option_menu = ['New DB', 'Refresh']
 
 		self.popupmenu = wx.Menu()
 		for text in self.option_menu:
@@ -187,6 +187,10 @@ class main ( wx.Frame ):
 			NewBD = new_database_dialog(self)
 			NewBD.ShowModal()
 			NewBD.Destroy()
+			self.tree.DeleteAllItems()
+			self.add_items_tree()
+
+		elif item == 'Refresh':
 			self.tree.DeleteAllItems()
 			self.add_items_tree()
 		
