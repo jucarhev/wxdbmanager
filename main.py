@@ -584,7 +584,10 @@ class add_new_column ( wx.Dialog ):
 			null = ''
 
 		sql = 'ALTER TABLE '+self.table+' ADD COLUMN '+self.txtFieldName.GetValue()
-		sql = sql +' '+self.cboType.GetValue()+'('+str(self.spinLong.GetValue())+') ' + ' '+ null
+		if self.cboType.GetValue() == "date":
+			sql = sql +' '+self.cboType.GetValue()+ ' '+ null
+		else:
+			sql = sql +' '+self.cboType.GetValue()+'('+str(self.spinLong.GetValue())+') ' + ' '+ null
 		sql =sql +self.cboAfter.GetValue()+' '+self.cboFields.GetValue()+';'
 		
 		n = self.controller.execute_sql(sql, self.db)
@@ -1086,6 +1089,7 @@ class select_table_panel( wx.Panel ):
 		self.Bind(wx.EVT_LIST_ITEM_SELECTED ,self.click, self.lista)
 
 	def click(self,event):
+		self.array_delete = []
 		x = 0
 		for xy in self.columns:
 			self.array_delete.append( self.lista.GetItemText(event.GetIndex(),x) )
@@ -1367,14 +1371,14 @@ class console_panel( wx.Panel ):
 		if row.upper().count("SHOW TABLES") == 1:
 			self.m_listCtrl1.ClearAll()
 			self.m_listCtrl1.InsertColumn(0, "Tables")
-			
+			self.showtables(database)
 		if row.upper().count("SHOW COLUMNS FROM ") == 1 or row.upper().count("DESCRIBE ") == 1:
 			print(row)
 			self.m_listCtrl1.ClearAll()
 			self.list_data1(row, database)
 		elif row.upper().count("SHOW DATABASES") == 1 or row.upper().count("SHOW SCHEMAS") == 1:
 			self.m_listCtrl1.ClearAll()
-			self.m_listCtrl1.InsertColumn(0, "Databases")
+			self.showdatabases()
 			
 		elif row.upper().count("SELECT * FROM ") == 1:
 			sql = row.split(' ')
@@ -1382,7 +1386,7 @@ class console_panel( wx.Panel ):
 				self.select( row, database )
 			else:
 				self.select( row, database, False )
-		elif check(row) == 1:
+		elif self.check(row) == 1:
 			pass
 		else:
 			self.select( row, database, False )
@@ -1393,6 +1397,7 @@ class console_panel( wx.Panel ):
 			if row.upper().count(x) == 1:
 				return 1
 
+	def function(self):
 		rows2 = ''
 		rows2 = self.controller.return_data(row, database)
 		
@@ -1409,7 +1414,27 @@ class console_panel( wx.Panel ):
 		except Exception as e:
 			
 			self.showMessage.SetLabel( str(rows2) )
+	
+	def showdatabases(self):
+		self.m_listCtrl1.InsertColumn(0, "Databases")
+
+		rows = self.controller.get_databases()
 		
+		for row in rows:
+			index = self.m_listCtrl1.InsertStringItem(sys.maxsize, str(row[0]))
+			for er in range(1,1):
+				self.m_listCtrl1.SetStringItem(index, er, str(row[er]))
+
+	def showtables(self, database):
+		self.m_listCtrl1.InsertColumn(0, "Tables")
+
+		rows = self.controller.get_tables(database)
+		
+		for row in rows:
+			index = self.m_listCtrl1.InsertStringItem(sys.maxsize, str(row[0]))
+			for er in range(1,1):
+				self.m_listCtrl1.SetStringItem(index, er, str(row[er]))
+
 	def list_data1(self, row, database):
 		rows = row.split(' ')
 		table = ''
