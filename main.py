@@ -1151,8 +1151,10 @@ class select_table_panel( wx.Panel ):
 		for row in rows:
 			arreglo.append(row)
 
+		idx = 0
 		for ar in arreglo:
-			index = self.lista.InsertStringItem(sys.maxsize, str(ar[0]))
+			index = self.lista.InsertStringItem(idx, str(ar[0]))
+			idx += 1
 			for er in range(1,c):
 				self.lista.SetStringItem(index, er, str(ar[er]))
 
