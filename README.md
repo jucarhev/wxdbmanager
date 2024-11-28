@@ -16,6 +16,7 @@ Hay acciones pendientes:
 - [ ] Busqueda de errores
 - [ ] Gestion de suarios
 - [ ] Archivos de configuracion
+- [ ] Actualizar
 
 ## Requerimientos
 python >3
